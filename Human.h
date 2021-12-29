@@ -5,35 +5,34 @@
 class Human 
     : public Player {
 public:
-    Human(Turn turn) { setTurn(turn); };
+    Human(Team t) { team = t; };
     void makeTurn(Field field, const std::string cmd, char c, short d) {
         short y = c - 'a';
         short x = d;
+
+        auto info = field[y * Game::WIDTH + x].getInfo();
+
         if (!cmd.compare("pass")) {
             return;
         }
         else if (!cmd.compare("split")) {
-            if (field[y * Game::WIDTH + x].getState() == Cell::State::EMPTY
-                && canSplit(field, x, y)) {
-                if (my_turn == Turn::BLUE) {
-                    field[y * Game::WIDTH + x] = Cell(Cell::State::BLUE_ALIVE);
+            if (info.first == Cell::State::EMPTY
+                && haveTeammate(field, x, y)) {
+                if (team == Team::BLUE) {
+                    field[y * Game::WIDTH + x] = Cell(Cell::State::ALIVE, Team::BLUE);
                 }
                 else {
-                    field[y * Game::WIDTH + x] = Cell(Cell::State::RED_ALIVE);
+                    field[y * Game::WIDTH + x] = Cell(Cell::State::ALIVE, Team::RED);
                 }
             }
         }
         else if (!cmd.compare("kill")) {
-            if (my_turn == Turn::BLUE) {
-                if (field[y * Game::WIDTH + x].getState() == Cell::State::RED_ALIVE
-                    && canSplit(field, x, y)) {
-                    field[y * Game::WIDTH + x] = Cell(Cell::State::RED_DEAD);
-                }
-            }
-            if (my_turn == Turn::RED) {
-                if (field[y * Game::WIDTH + x].getState() == Cell::State::BLUE_ALIVE
-                    && canSplit(field, x, y)) {
-                    field[y * Game::WIDTH + x] = Cell(Cell::State::BLUE_DEAD);
+            if (team == Team::BLUE) {
+                if (info.first == Cell::State::ALIVE 
+                    && team != info.second
+                    && haveTeammate(field, x, y)) {
+
+                    field[y * Game::WIDTH + x].changeState(Cell::State::DEAD);
                 }
             }
         }
