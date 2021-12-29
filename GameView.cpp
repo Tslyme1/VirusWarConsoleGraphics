@@ -1,4 +1,5 @@
 #include "GameView.h"
+#include "Game.h"
 #include <cstring>
 #include <iostream>
 
@@ -28,6 +29,12 @@ GameView::GameView(short width, short height)
 	SetConsoleCursorPosition(h_console_out, COORD{ 0, 0 });
 }
 
+void GameView::clearText() {
+	SetConsoleCursorPosition(h_console_out, COORD{ 0, 0 });
+	WriteConsoleOutput(h_console_out, buffer, { actual_width, actual_height }, { 0, 0 }, &window);
+	SetConsoleCursorPosition(h_console_out, COORD{ 0, 0 });
+};
+
 void GameView::update(Field field) {
 	SetConsoleCursorPosition(h_console_out, COORD{ 0, 0 });
 	for (short x = 0; x < field_bounds.Right - field_bounds.Left - 1; ++x) {
@@ -44,33 +51,37 @@ void GameView::update(Field field) {
 GameView::CellWrapper GameView::getCellView(Cell cell) {
 	short color = COLOR::B_BLACK | COLOR::F_WHITE, c1 = '?', c2 = '?';
 	
-	switch (cell.getState()) {
+	std::pair<Cell::State, Team> info = cell.getInfo();
+
+	switch (info.first) {
 	case Cell::State::EMPTY: {
+		c1 = c2 = 0x0000;
+		return CellWrapper{ color, c1, c2 };
+	}
+	case Cell::State::DEAD: {
+		c1 = '>';
+		c2 = '<';
+		break;
+	}
+	case Cell::State::ALIVE: {
 		c1 = c2 = 0x0000;
 		break;
 	}
-	case Cell::State::RED_DEAD: {
+	default:
+		break;
+	}
+
+	switch (info.second) {
+	case Team::RED: {
 		color = COLOR::B_RED | COLOR::F_BLACK;
-		c1 = '>';
-		c2 = '<';
 		break;
 	}
-	case Cell::State::BLUE_DEAD: {
+	case Team::BLUE: {
 		color = COLOR::B_BLUE | COLOR::F_BLACK;
-		c1 = '>';
-		c2 = '<';
 		break;
 	}
-	case Cell::State::RED_ALIVE: {
-		color = COLOR::B_RED | COLOR::F_BLACK;
-		c1 = 0x0000;
-		c2 = 0x0000;
-		break;
-	}
-	case Cell::State::BLUE_ALIVE: {
-		color = COLOR::B_BLUE | COLOR::F_BLACK;
-		c1 = 0x0000;
-		c2 = 0x0000;
+	case Team::NONE: {
+		color = COLOR::B_BLACK | COLOR::F_WHITE;
 		break;
 	}
 	default:
