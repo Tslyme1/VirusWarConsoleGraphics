@@ -5,15 +5,14 @@
 #include <cstdlib>
 #include <vector>
 #include <string>
-#include <ctime>
 
 class Bot
     : public Player {
 public:
-    Bot(Turn turn) { 
-        std::srand(std::time(nullptr));
-        setTurn(turn); 
-        if (turn == Turn::BLUE) {
+    Bot(Team t) { 
+        
+        team = t; 
+        if (t == Team::BLUE) {
             x0 = 9;
             y0 = 9;
         }
@@ -28,35 +27,29 @@ public:
         short y = y0 + dy;
         short x = x0 + dx;
 
+        auto info = field[y * Game::WIDTH + x].getInfo();
+
         if (!cmd.compare("pass")) {
-            
+            return;
         }
         else if (!cmd.compare("split")) {
-            if (field[y * Game::WIDTH + x].getState() == Cell::State::EMPTY
-                && canSplit(field, x, y)) {
-                if (my_turn == Turn::BLUE) {
-                    field[y * Game::WIDTH + x] = Cell(Cell::State::BLUE_ALIVE);
-                    y0 = y;
-                    x0 = x;
+            if (info.first == Cell::State::EMPTY
+                && haveTeammate(field, x, y)) {
+                if (team == Team::BLUE) {
+                    field[y * Game::WIDTH + x] = Cell(Cell::State::ALIVE, Team::BLUE);
                 }
                 else {
-                    field[y * Game::WIDTH + x] = Cell(Cell::State::RED_ALIVE);
-                    y0 = y;
-                    x0 = x;
+                    field[y * Game::WIDTH + x] = Cell(Cell::State::ALIVE, Team::RED);
                 }
             }
         }
         else if (!cmd.compare("kill")) {
-            if (my_turn == Turn::BLUE) {
-                if (field[y * Game::WIDTH + x].getState() == Cell::State::RED_ALIVE
-                    && canSplit(field, x, y)) {
-                    field[y * Game::WIDTH + x] = Cell(Cell::State::RED_DEAD);
-                }
-            }
-            if (my_turn == Turn::RED) {
-                if (field[y * Game::WIDTH + x].getState() == Cell::State::BLUE_ALIVE
-                    && canSplit(field, x, y)) {
-                    field[y * Game::WIDTH + x] = Cell(Cell::State::BLUE_DEAD);
+            if (team == Team::BLUE) {
+                if (info.first == Cell::State::ALIVE
+                    && team != info.second
+                    && haveTeammate(field, x, y)) {
+
+                    field[y * Game::WIDTH + x].changeState(Cell::State::DEAD);
                 }
             }
         }
@@ -68,6 +61,6 @@ private:
     short x0 = 0;
     short y0 = 0;
 
-    std::vector<std::string> cmds = {"pass", "kill", "split"};
+    std::vector<std::string> cmds = {"kill", "split"};
 };
 
