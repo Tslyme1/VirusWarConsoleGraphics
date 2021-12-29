@@ -23,6 +23,7 @@ public:
 	GameView() : GameView(60, 30) {};
 	GameView(short width, short height);
 
+	void clearText();
 	void update(Field field);
 private:
 	void drawPixel(short x, short y, short color=COLOR::B_WHITE, short c1 = 0x2588, short c2 = 0x2588);
